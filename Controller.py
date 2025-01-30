@@ -6,6 +6,14 @@ from Simulation import Simulation
 from constants import *
 
 class BoidSimulationController:
+    """
+    Controller class for the simulation of a flock of boids.
+
+    Description:
+    The controller initializes a gui to manage the arguments and events of a simulation.
+    When a simulation has started the controller can pause, update ir stop it.
+    """
+
     def __init__(self):
         self.root = tk.Tk()
         self.root.title("Boid Simulation Configuration")
@@ -28,10 +36,10 @@ class BoidSimulationController:
         # Slider and parameter tracking variables
         self.params = {
             'num_boids': tk.IntVar(value=100),
-            'boid_size': tk.IntVar(value=20),
-            'separation_radius': tk.IntVar(value=1),
-            'cohesion_radius': tk.IntVar(value=2),
-            'alignment_radius': tk.IntVar(value=2),
+            'boid_size': tk.IntVar(value=10),
+            'separation_radius': tk.IntVar(value=10),
+            'cohesion_radius': tk.IntVar(value=16),
+            'alignment_radius': tk.IntVar(value=20),
             'max_speed': tk.IntVar(value=5),
             'max_force': tk.IntVar(value=1)
         }
