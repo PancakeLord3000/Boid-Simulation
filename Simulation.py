@@ -6,10 +6,12 @@ import random
 import time
 import hashlib
 import pygame
+from pygame.event import Event as PygameEvent
 from pygame.locals import DOUBLEBUF, OPENGL, QUIT, MOUSEBUTTONDOWN, MOUSEBUTTONUP, MOUSEMOTION
 from OpenGL.GL import glPushMatrix, glRotatef, glColor3f, glBegin, glEnd, glPopMatrix, glEnable, glMatrixMode, glLoadIdentity, glLineWidth, glVertex3fv, glClearColor, glClear, glReadPixels
 from OpenGL.GL import GL_DEPTH_TEST, GL_PROJECTION, GL_MODELVIEW, GL_LINES, GL_COLOR_BUFFER_BIT, GL_DEPTH_BUFFER_BIT, GL_RGB, GL_UNSIGNED_BYTE
 from OpenGL.GLU import gluPerspective, gluLookAt
+from threading import Event
 
 from Boid import Boid
 from constants import *
@@ -33,9 +35,9 @@ class Simulation:
     file_name (str): File name for the .mp4 if the class saves a file.
     """
 
-    def __init__(self, pause_event = None, stop_event = None, update_event = None, 
-                 num_boids = 100, num_frames = None, boid_size = 10, separation_radius = 2, 
-                 cohesion_radius = 7, alignment_radius = 5, max_speed = 5, max_force = 1, file_name = None):
+    def __init__(self, pause_event:Event = None, stop_event:Event = None, update_event:Event = None, 
+                 num_boids:int = 100, num_frames:int = None, boid_size:int = 10, separation_radius:int = 2, 
+                 cohesion_radius:int = 7, alignment_radius:int = 5, max_speed:int = 5, max_force:int = 1, file_name:str = None) -> None:
         self.pause_event = pause_event
         self.stop_event = stop_event
         self.update_event = update_event
@@ -68,12 +70,13 @@ class Simulation:
 
         self.group_colors = {}
 
-    def __str__(self):
+    def __str__(self) -> str:
         frames = ""
         if self.num_frames: frames = f"saving {self.file_name}, {self.num_frames/30}s"
         return f"Boid Simulation: boids={self.num_boids}, {frames}\n{self.boids[0]}"
 
-    def _update_args(self, num_boids, boid_size, separation_radius, cohesion_radius, alignment_radius, max_speed, max_force):
+    def _update_args(self, num_boids:int, boid_size:int = 10, separation_radius:int = 2, 
+                 cohesion_radius:int = 7, alignment_radius:int = 5, max_speed:int = 5, max_force:int = 1) -> None:
         self.num_boids = num_boids
         self.boid_size = boid_size
         self.separation_radius = self.boid_size*separation_radius/2
@@ -82,7 +85,7 @@ class Simulation:
         self.max_speed = max_speed
         self.max_force = max_force
 
-    def init_sim(self):
+    def init_sim(self) -> None:
         """
         Initializes the simulation window and boids.
         """
@@ -98,7 +101,7 @@ class Simulation:
         self._init_boids()
         self.last_camera_move_time = time.time()
 
-    def _init_boids(self):
+    def _init_boids(self) -> None:
         """
         Populates the simulation with boids.
         """
@@ -111,7 +114,7 @@ class Simulation:
                  self.cohesion_radius, self.alignment_radius, self.max_speed, self.max_force)
             self.boids.append(boid)
 
-    def _pre_simulation_interaction(self):
+    def _pre_simulation_interaction(self) -> bool:
         """
         Renders the initial position of the cube and exits after 4s.
         """
@@ -138,9 +141,9 @@ class Simulation:
                 return True
             time.sleep(0.1)
 
-    def _modify_simulation_parameters(self, **kwargs):
+    def _modify_simulation_parameters(self, **kwargs) -> None:
         """
-        TODO
+        not necessary i think
         """
         for key, value in kwargs.items():
             if hasattr(self, key):
@@ -152,9 +155,9 @@ class Simulation:
                 if hasattr(boid, key):
                     setattr(boid, key, value)
     
-    def _add_boids(self, num_new_boids):
+    def _add_boids(self, num_new_boids: int) -> None:
         """
-        TODO
+        Adds randomly positioned new boids
         """
         for _ in range(num_new_boids):
             x = random.uniform(-CUBE_SIZE/2, CUBE_SIZE/2)
@@ -166,17 +169,18 @@ class Simulation:
             self.boids.append(boid)
         self.num_boids = len(self.boids)
     
-    def _remove_random_boids(self, num_boids_to_remove):
+    def _remove_random_boids(self, num_boids_to_remove: int) -> None:
         """
-        TODO
+        Removes random boids from the simulation
         """
         for _ in range(num_boids_to_remove):
             if self.boids:
                 boid_to_remove = random.choice(self.boids)
+                # this is enough because the sim clears all the boids every frame to re-render them the next
                 self.boids.remove(boid_to_remove)
         self.num_boids = len(self.boids)
 
-    def _save(self):
+    def _save(self) -> None:
         """
         Create a video file from the saved frames using ffmpeg.
         """
@@ -201,8 +205,9 @@ class Simulation:
         subprocess.run(ffmpeg_command)
         print(f"Video '{output_video}' created successfully.")
 
-    def _draw_cube(self, color = (0.5, 0.5, 0.5), width = 3.0):
+    def _draw_cube(self, color:tuple[float, float, float] = (0.5, 0.5, 0.5), width:float = 3.0) -> None:
         """
+        Draws the observation cube.
         """
         glPushMatrix()
         glRotatef(0, 1, 1, 1)
@@ -238,7 +243,7 @@ class Simulation:
         glEnd()
         glPopMatrix()
 
-    def _handle_camera_controls(self, event):
+    def _handle_camera_controls(self, event:PygameEvent) -> None:
         """
         Camera controls.
         """
@@ -278,7 +283,7 @@ class Simulation:
                 self.camera_pan_y -= dy * PAN_SPEED
                 self.last_mouse_pos = mouse_pos
 
-    def _update_camera(self):
+    def _update_camera(self) -> None:
         """"
         """
         glLoadIdentity()
@@ -315,7 +320,7 @@ class Simulation:
             0, 0, 1
         )
             
-    def _get_group_color(self, group_id):
+    def _get_group_color(self, group_id:int) -> tuple[float, float, float]:
         """
         Returns a color based on an integer.
         """
@@ -329,7 +334,7 @@ class Simulation:
             self.group_colors[group_id] = (r, g, b)
         return self.group_colors[group_id]
     
-    def _get_boid_groups(self):
+    def _get_boid_groups(self) -> list[list[Boid]]:
         """
         Defines the boid groups based on cohesion and distance.
         """
@@ -354,7 +359,7 @@ class Simulation:
             merged_groups.append(current_group)
         return merged_groups
 
-    def _update_boid_colors(self):
+    def _update_boid_colors(self) -> None:
         """
         Updates the boid colors based on groups.
         """
@@ -371,21 +376,23 @@ class Simulation:
             boid.set_group(None)
             boid.change_color(DEFAULT_BOID_COLOR)
 
-    def _create_folder(self, folder_path):
+    def _create_folder(self, folder_path:str) -> None:
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
             print(f"Folder '{folder_path}' created successfully.")
         else:
             print(f"Folder '{folder_path}' already exists.")
 
-    def _delete_folder(self, folder_path):
+    def _delete_folder(self, folder_path:str) -> int:
         if os.path.exists(folder_path):
             shutil.rmtree(folder_path)
             print(f"Folder '{folder_path}' and its contents deleted successfully.")
+            return 0
         else:
             print(f"Folder '{folder_path}' does not exist.")
+            return -1
 
-    def run(self):
+    def run(self) -> None:
         """
         Runs the boid simulation.
         """

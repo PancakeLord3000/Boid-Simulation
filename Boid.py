@@ -1,6 +1,7 @@
 import math
 import random
 import pygame
+from typing import Self
 from OpenGL.GL import glPushMatrix, glTranslatef, glRotatef, glColor3f, glBegin, glVertex3f, glEnd, glPopMatrix
 from OpenGL.GL import GL_TRIANGLES
 
@@ -22,8 +23,8 @@ class Boid:
     alignment_radius, max_speed, max_force (int): Boid parameters.
     """
 
-    def __init__(self, x, y, z, boid_size = 10, separation_radius = 2, 
-                 cohesion_radius = 7, alignment_radius = 5, max_speed = 5, max_force = 1):
+    def __init__(self, x:float, y:float, z:float, boid_size:int = 10, separation_radius:int = 2, 
+                 cohesion_radius:int = 7, alignment_radius:int = 5, max_speed:int = 5, max_force:int = 1) -> None:
         self.boid_size = boid_size
         self.separation_radius = boid_size*separation_radius/2
         self.cohesion_radius =  boid_size*cohesion_radius
@@ -37,10 +38,11 @@ class Boid:
         self.color = DEFAULT_BOID_COLOR
         self.group = None  
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"Boid:({self.position})({self.velocity})({self.acceleration}), size={self.boid_size}, separation={self.separation_radius*2}, cohesion={self.cohesion_radius}, alignment={self.alignment_radius}, max speed={self.max_speed}, max force={self.max_force}"
     
-    def _update_args(self, boid_size, separation_radius, cohesion_radius, alignment_radius, max_speed, max_force):
+    def _update_args(self, boid_size:int = 10, separation_radius:int = 2, 
+                 cohesion_radius:int = 7, alignment_radius:int = 5, max_speed:int = 5, max_force:int = 1) -> None:
         self.boid_size = boid_size
         self.separation_radius = self.boid_size*separation_radius/2
         self.cohesion_radius =  self.boid_size*cohesion_radius
@@ -48,12 +50,14 @@ class Boid:
         self.max_speed = max_speed
         self.max_force = max_force
 
-
-    def flock(self, boids):
+    def flock(self, boids: list[Self]) -> None:
         """
         Updates the boid's direction and speed (acceleration vector) according to other boid's position
         relative to itself.
-        Occasionally updates a random force.
+        Occasionally updates with a random force.
+
+        Arguments:
+        boids (list): A list of all the boids in the simulation.
         """
         separation_force = self._separate(boids)
         alignment_force = self._align(boids)
@@ -76,7 +80,7 @@ class Boid:
             self._apply_force(cube_force)
             # self._apply_force(center_alignment_force*0.1)    # this is not necessary but its nice to have the flock near the default center of the camera
   
-    def update(self):
+    def update(self) -> None:
         """
         Update the boid's position and velocity based on its acceleration vector.
         """
@@ -85,7 +89,7 @@ class Boid:
         self.position += self.velocity
         self.acceleration *= 0
 
-    def render(self):
+    def render(self) -> None:
         """
         Renders the boid as a 3D pyramid.
         """
@@ -101,29 +105,22 @@ class Boid:
 
         glColor3f(*self.color)  
         glBegin(GL_TRIANGLES)
-
-        # Draw the pyramid
         pyramid_height = self.boid_size * 3/5
         pyramid_base_radius = self.boid_size * 2/5
 
-        # Base square vertices
         base_vertices = [
             pygame.math.Vector3(-pyramid_base_radius, -pyramid_base_radius, 0),
             pygame.math.Vector3(pyramid_base_radius, -pyramid_base_radius, 0),
             pygame.math.Vector3(pyramid_base_radius, pyramid_base_radius, 0),
             pygame.math.Vector3(-pyramid_base_radius, pyramid_base_radius, 0)
         ]
-
-        # Apex vertex
         apex_vertex = pygame.math.Vector3(0, 0, pyramid_height)
 
-        # Draw the triangular faces
+        # Draw
         for i in range(4):
             glVertex3f(*base_vertices[i])
             glVertex3f(*base_vertices[(i + 1) % 4])
             glVertex3f(*apex_vertex)
-
-        # Draw the base square
         glVertex3f(*base_vertices[0])
         glVertex3f(*base_vertices[1])
         glVertex3f(*base_vertices[2])
@@ -132,14 +129,14 @@ class Boid:
         glEnd()
         glPopMatrix()
 
-    def _apply_force(self, force):
+    def _apply_force(self, force:pygame.math.Vector3) -> None:
         """
         Apply a force to the boid's acceleration vector, essentially changing the speed and direction
         of the boid.
         """
         self.acceleration += force
 
-    def _separate(self, boids):
+    def _separate(self, boids:list[Self]) -> pygame.math.Vector3:
         """
         Computes a force that steers the boid away from its neighbors.
 
@@ -172,7 +169,7 @@ class Boid:
 
         return separation_force
 
-    def _align(self, boids):
+    def _align(self, boids:list[Self]) -> pygame.math.Vector3:
         """
         Computes a force that steers the boid towards the average direction of its neighbors.
 
@@ -201,7 +198,7 @@ class Boid:
 
         return alignment_force
 
-    def _cohesion(self, boids):
+    def _cohesion(self, boids:list[Self]) -> pygame.math.Vector3:
         """
         Computes a force that steers the boid towards the average position of its neighbors.
 
@@ -229,10 +226,13 @@ class Boid:
                 cohesion_force.scale_to_length(self.max_force)
         return cohesion_force
     
-    def _align_to_center(self):
+    def _align_to_center(self) -> pygame.math.Vector3:
         """
         Not necessary to the simulation
         Create an orbiting motion around the center point (0,0,0) at a fixed radius.
+
+        Returns:
+        pygame.math.Vector3: An origin orbiting vector.
         """
         center = pygame.math.Vector3(0, 0, 0)
         distance_to_center = center - self.position
@@ -265,19 +265,19 @@ class Boid:
 
         return pygame.math.Vector3()
           
-    def change_color(self, color=DEFAULT_BOID_COLOR):
+    def change_color(self, color:tuple[float, float, float] = DEFAULT_BOID_COLOR) -> None:
         """
         Changes the color of the boid.
         """
         self.color = color
 
-    def set_group(self, group):
+    def set_group(self, group:list[Self]) -> None:
         """
         Gives the boid a group, defined by the simulation.
         """
         self.group = group
         
-    def _stay_in_cube(self):
+    def _stay_in_cube(self) -> pygame.math.Vector3:
         """
         Computes a force that steers the boid away from the edges of the observation cube.
         """

@@ -14,7 +14,7 @@ class BoidSimulationController:
     When a simulation has started the controller can pause, update ir stop it.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.root = tk.Tk()
         self.root.title("Boid Simulation Configuration")
         self.root.geometry("300x670")
@@ -44,20 +44,24 @@ class BoidSimulationController:
             'max_force': tk.IntVar(value=1)
         }
         
-    def _simulation_runner(self):
+    def _simulation_runner(self) -> None:
+        """
+        Starts and runs the simulation. Used in a Thread.
+        """
         self.simulation.init_sim()
         self.simulation.run()
     
-    def _start_simulation(self):
+    def _start_simulation(self) -> None:
+        """
+        Retrieves arguments and launches a simulation in a thread.
+        """
         if self.simulation_thread and self.simulation_thread.is_alive():
             return
         
-        # Reset events
         self.stop_event.clear()
         self.pause_event.clear()
         self.update_event.clear()
         
-        # Extract current parameter values
         sim_params = {
             'num_boids': self.params['num_boids'].get(),
             'boid_size': self.params['boid_size'].get(),
@@ -68,7 +72,6 @@ class BoidSimulationController:
             'max_force': self.params['max_force'].get()
         }
         
-        # Determine simulation duration
         num_frames = None
         if self.save_var.get():
             try:
@@ -78,7 +81,6 @@ class BoidSimulationController:
                 # Default to 60 seconds if invalid input
                 num_frames = FPS * 60
         
-        # Initialize simulation
         self.simulation = Simulation(
             self.pause_event, self.stop_event, self.update_event,
             sim_params['num_boids'], 
@@ -95,36 +97,40 @@ class BoidSimulationController:
         self.simulation_thread = threading.Thread(target=self._simulation_runner)
         self.simulation_thread.start()
             
-    def _pause_simulation(self):
+    def _pause_simulation(self) -> None:
+        """
+        """
         if not self.pause_event.is_set():
             self.pause_event.set()
     
-    def _resume_simulation(self):
+    def _resume_simulation(self) ->  None:
+        """
+        """
         if self.pause_event.is_set():
             self.pause_event.clear()
     
-    def _toggle_pause(self):
+    def _toggle_pause(self) ->  None:
+        """
+        """
         if self.pause_event.is_set():
             self._resume_simulation()
         else:
             self._pause_simulation()
     
-    def _stop_simulation(self):
-        # Set stop event to exit the simulation loop
+    def _stop_simulation(self) -> None:
+        """
+        """
         self.stop_event.set()
-        
-        # Clear pause to allow thread to exit
         self.pause_event.clear()
-        
-        # Wait for thread to finish
         if self.simulation_thread:
             self.simulation_thread.join()
-        
-        # Reset simulation references
         self.simulation = None
         self.simulation_thread = None
     
-    def _update_params(self):
+    def _update_params(self) -> None:
+        """
+        Updates the parameters for the Simulation and all the Boids.
+        """
         self.update_event.set()
         
         sim_params = [
@@ -152,7 +158,8 @@ class BoidSimulationController:
         #             else:
         #                 setattr(boid, key, value)
 
-    def _create_slider(self, label_text, var, from_, to, default, step=1):
+    def _create_slider(self, label_text:str, var:any, from_:int|float, to:int|float, 
+                       default:int|float, step:int|float = 1) -> None:
         """
         Create a slider with customizable step value
         
@@ -188,7 +195,7 @@ class BoidSimulationController:
         slider.set(default)
         slider.pack(pady=0)
         
-    def _create_gui(self):        
+    def _create_gui(self) -> None:       
         # Create sliders for each parameter
         self._create_slider(
             "Number of Boids", self.params['num_boids'], 
@@ -202,17 +209,17 @@ class BoidSimulationController:
         
         self._create_slider(
             "Separation Radius", self.params['separation_radius'], 
-            from_=10, to=240, default=10, step=10
+            from_=5, to=25, default=10, step=5
         )
         
         self._create_slider(
             "Cohesion Radius", self.params['cohesion_radius'], 
-            from_=8, to=160, default=16, step=8
+            from_=8, to=64, default=16, step=4
         )
         
         self._create_slider(
             "Alignment Radius", self.params['alignment_radius'], 
-            from_=10, to=200, default=20, step=10
+            from_=10, to=50, default=20, step=5
         )
         
         self._create_slider(
@@ -225,7 +232,7 @@ class BoidSimulationController:
             from_=1, to=5, default=1, step=1
         )
         
-        # Save simulation controls
+        # Sim controls
         save_check = ttk.Checkbutton(
             self.root, 
             text="Save Simulation", 
@@ -243,10 +250,8 @@ class BoidSimulationController:
         self.duration_entry.insert(0, "60")  # Default value
         self.duration_entry.pack(side=tk.LEFT, padx=(5, 0))
         
-        # Initially disable duration controls
         self._toggle_duration_state()
                 
-        # Simulation control buttons
         control_frame = ttk.Frame(self.root)
         control_frame.pack(pady=10)
         
@@ -267,10 +272,12 @@ class BoidSimulationController:
         
         self.root.mainloop()
     
-    def _toggle_duration_state(self):
-        """Toggle the state of duration entry based on save checkbox"""
+    def _toggle_duration_state(self) -> None:
+        """
+        Toggle duration
+        """
         state = "normal" if self.save_var.get() else "disabled"
         self.duration_entry.config(state=state)
 
-    def run(self):
+    def run(self) -> None:
         self._create_gui()
