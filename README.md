@@ -12,4 +12,4 @@ In this implementation we use opengl to render a configurable simulation of bird
 A simulation can be started by calling the class ``Simulation`` directly, or by using the ``BoidSimulationController`` like in main.py to use a gui. 
 
 # Demo
-![](demo.mp4)
+![](demo.gif)
